@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 
-
-
 function downloadCSV(data, filename = 'data.csv') {
   if (!data || !data.length) return;
 
@@ -15,7 +13,7 @@ function downloadCSV(data, filename = 'data.csv') {
   // Rows
   for (const row of data) {
     const values = headers.map(header => {
-      const escaped = ('' + row[header]).replace(/"/g, '""'); 
+      const escaped = ('' + row[header]).replace(/"/g, '""');
       return `"${escaped}"`;
     });
     csvRows.push(values.join(','));
@@ -34,7 +32,6 @@ function downloadCSV(data, filename = 'data.csv') {
   a.click();
   document.body.removeChild(a);
 }
-
 
 const ExcelDataViewer = () => {
   const [visitdata, setVisitdata] = useState([]);
@@ -82,7 +79,6 @@ const ExcelDataViewer = () => {
       <button onClick={() => downloadCSV(visitdata, 'visitdata.csv')}>
         Download Visit Data som CSV
       </button>
-      
 
       <h2>Visit Data</h2>
       {visitdata.length === 0 ? (
