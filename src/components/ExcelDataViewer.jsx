@@ -1,6 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 
+
+
+function downloadCSV(data, filename = 'data.csv') {
+  if (!data || !data.length) return;
+
+  const csvRows = [];
+
+  // Headers
+  const headers = Object.keys(data[0]);
+  csvRows.push(headers.join(','));
+
+  // Rows
+  for (const row of data) {
+    const values = headers.map(header => {
+      const escaped = ('' + row[header]).replace(/"/g, '""'); 
+      return `"${escaped}"`;
+    });
+    csvRows.push(values.join(','));
+  }
+
+  const csvString = csvRows.join('\n');
+
+  // Create blob og download link
+  const blob = new Blob([csvString], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.setAttribute('hidden', '');
+  a.setAttribute('href', url);
+  a.setAttribute('download', filename);
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+
 const ExcelDataViewer = () => {
   const [visitdata, setVisitdata] = useState([]);
   const [animaldata, setAnimaldata] = useState([]);
@@ -40,6 +75,14 @@ const ExcelDataViewer = () => {
   return (
     <div>
       <h1>Excel Data Viewer</h1>
+
+      <button onClick={() => downloadCSV(animaldata, 'animaldata.csv')}>
+        Download Animal Data som CSV
+      </button>
+      <button onClick={() => downloadCSV(visitdata, 'visitdata.csv')}>
+        Download Visit Data som CSV
+      </button>
+      
 
       <h2>Visit Data</h2>
       {visitdata.length === 0 ? (
