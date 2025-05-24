@@ -6,7 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import SuperUserPanel from "./pages/SuperUserPanel";
 import UserManagement from "./pages/UserManagement";
-import ExcelDataViewer from "./components/ExcelDataViewer";
+import Warnings from "./pages/Warnings";
 
 const ProtectedRoute = ({ children, role }) => {
   const { user } = useAuth();
@@ -15,7 +15,6 @@ const ProtectedRoute = ({ children, role }) => {
   return children;
 };
 
-import ExcelDataViewer from "./components/ExcelDataViewer";
 
 
 export default function App() {
@@ -29,6 +28,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/warnings"
+            element={
+              <ProtectedRoute>
+                <Warnings />
               </ProtectedRoute>
             }
           />
