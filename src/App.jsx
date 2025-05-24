@@ -1,3 +1,4 @@
+
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
@@ -5,6 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import SuperUserPanel from "./pages/SuperUserPanel";
 import UserManagement from "./pages/UserManagement";
+import ExcelDataViewer from "./components/ExcelDataViewer";
 
 const ProtectedRoute = ({ children, role }) => {
   const { user } = useAuth();
@@ -12,6 +14,9 @@ const ProtectedRoute = ({ children, role }) => {
   if (role && user.role !== role) return <Navigate to="/dashboard" />;
   return children;
 };
+
+import ExcelDataViewer from "./components/ExcelDataViewer";
+
 
 export default function App() {
   return (
