@@ -8,6 +8,7 @@ import SuperUserPanel from "./pages/SuperUserPanel";
 import UserManagement from "./pages/UserManagement";
 import ExcelDataViewer from "./components/ExcelDataViewer";
 import { DashboardProvider } from "./context/DashboardContext";
+import Warnings from "./pages/Warnings";
 
 
 const ProtectedRoute = ({ children, role }) => {
@@ -31,6 +32,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/warnings"
+            element={
+              <ProtectedRoute>
+                <Warnings />
               </ProtectedRoute>
             }
           />

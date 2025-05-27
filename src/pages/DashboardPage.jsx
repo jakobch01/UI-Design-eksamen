@@ -1,10 +1,17 @@
 import { useDashboard } from "../context/DashboardContext";
 import { useAuth } from "../auth/AuthContext";
+import { useNavigate } from "react-router-dom";
+impo
 import NumberCardWidget from "../components/NumberCardWidget";
 
 export default function DashboardPage() {
   const { dashboards } = useDashboard();
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const goToWarnings = () => {
+    navigate("/warnings"); // Navigates to the warnings page
+  };
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
@@ -33,7 +40,9 @@ export default function DashboardPage() {
                     />
                   ) : (
                     <div key={widx} className="bg-gray-300 p-3 rounded">
-                      <p className="font-semibold">{w.type}: {w.metric}</p>
+                      <p className="font-semibold">
+                        {w.type}: {w.metric}
+                      </p>
                       <p className="text-gray-600 text-xs">
                         {w.timePeriod} | {w.pigGroup}
                       </p>
@@ -46,12 +55,21 @@ export default function DashboardPage() {
         ))
       )}
 
-      <button
-        onClick={logout}
-        className="mt-6 bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded"
-      >
-        Log ud
-      </button>
+      <div className="flex gap-4 mt-6">
+        <button
+          onClick={logout}
+          className="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded"
+        >
+          Log ud
+        </button>
+
+        <button
+          onClick={goToWarnings}
+          className="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded"
+        >
+          Liste over advarsler
+        </button>
+      </div>
     </div>
   );
 }
