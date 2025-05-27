@@ -21,8 +21,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-800 px-4">
-      <div className="bg-gray-700 p-8 rounded-lg shadow-md w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-[#4B4B4B] px-4">
+      <div className="bg-[#4B4B4B] p-8 rounded-lg shadow-md w-full max-w-sm">
         <h2 className="text-3xl font-bold text-white mb-6 text-center">Login</h2>
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
