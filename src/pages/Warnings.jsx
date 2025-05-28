@@ -19,7 +19,7 @@ const WarningsPage = () => {
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-        // Beregn gennemsnitligt dagligt foderforbrug
+        // Beregner gennemsnitligt dagligt foderforbrug
         const processed = jsonData.map(pig => {
           const totalFeed = parseFloat(pig["Total feed intake (kg)"]) || 0;
           const days = parseFloat(pig["Completed days in test"]) || 1;
