@@ -4,7 +4,7 @@ import * as XLSX from "xlsx";
 import { useAuth } from "../auth/AuthContext";
 import { useDashboard } from "../context/DashboardContext";
 import NumberCardWidget from "../components/NumberCardWidget";
-import LineChartWidget from "../components/LineChartWidget";
+import BarChartWidget from "../components/BarChartWidget";
 
 export default function SuperUserPanel() {
   const navigate = useNavigate();
@@ -54,11 +54,8 @@ export default function SuperUserPanel() {
   };
 
   const [widgetForm, setWidgetForm] = useState({
-    type: "Line Chart",
-    metric: "Weight Gain Over Time",
-    timePeriod: "Last 30 Days",
-    pigGroup: "All",
-    location: "All",
+    type: "Number Card",
+    metric: "Number of pigs",
   });
 
   const handleFormChange = (e) =>
@@ -66,7 +63,6 @@ export default function SuperUserPanel() {
 
   const addWidget = () => {
     let widgetToAdd = { ...widgetForm };
-
     const animalData = dashboards[selectedDashboard]?.data?.animalData || [];
     const visitData = dashboards[selectedDashboard]?.data?.visitData || [];
 
@@ -74,40 +70,32 @@ export default function SuperUserPanel() {
       widgetToAdd.value = animalData.length;
     }
 
-    if (widgetForm.type === "Line Chart" && widgetForm.metric === "Weight Gain Over Time") {
-      const dataByLocation = {};
+    if (widgetForm.type === "Bar Chart" && widgetForm.metric === "Feed Efficiency by Location") {
+      const efficiencyByLocation = {};
 
-      visitData.forEach((visit) => {
-        const animal = animalData.find(a => a["Responder"] === visit["Responder"]);
-        const location = animal?.["Location"] || "Unknown";
+      animalData.forEach((animal) => {
+        const location = animal["Location"] || "Unknown";
+        const weightGain = parseFloat(animal["Weight gain"]) || 0;
 
-        if (widgetForm.location !== "All" && location !== widgetForm.location) {
-          return;
+        const visits = visitData.filter((visit) => visit["Responder"] === animal["Responder"]);
+        const totalFeed = visits.reduce((sum, visit) => sum + (parseFloat(visit["Feed amount (g)"]) || 0), 0);
+
+        if (!efficiencyByLocation[location]) {
+          efficiencyByLocation[location] = { totalFeed: 0, totalWeightGain: 0, count: 0 };
         }
 
-        const excelDate = visit.Date;
-        const jsDate = typeof excelDate === "number"
-          ? new Date((excelDate - 25569) * 86400 * 1000).toISOString().split("T")[0]
-          : excelDate || "Unknown Date";
-
-        const weight = parseFloat(visit["Weight"]) || 0;
-
-        if (!dataByLocation[location]) dataByLocation[location] = {};
-        if (!dataByLocation[location][jsDate]) dataByLocation[location][jsDate] = { total: 0, count: 0 };
-
-        dataByLocation[location][jsDate].total += weight;
-        dataByLocation[location][jsDate].count += 1;
+        efficiencyByLocation[location].totalFeed += totalFeed;
+        efficiencyByLocation[location].totalWeightGain += weightGain;
+        efficiencyByLocation[location].count += 1;
       });
 
-      widgetToAdd.data = Object.entries(dataByLocation).flatMap(([location, dates]) =>
-        Object.entries(dates).map(([date, { total, count }]) => ({
-          group: location,
-          date,
-          value: count ? (total / count) : 0,
-        }))
-      );
+      widgetToAdd.data = Object.entries(efficiencyByLocation).map(([location, values]) => ({
+        location,
+        efficiency: values.totalWeightGain > 0 ? values.totalFeed / values.totalWeightGain : 0,
+      }));
     }
 
+    console.log("Widget Data:", widgetToAdd.data);
     addWidgetToDashboard(selectedDashboard, widgetToAdd);
     setShowWidgetForm(false);
   };
@@ -120,10 +108,7 @@ export default function SuperUserPanel() {
     <div className="min-h-screen bg-gray-800 text-white p-6 font-sans">
       <header className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold tracking-wide">Dashboard</h1>
-        <button
-          onClick={logout}
-          className="bg-red-600 px-4 py-2 rounded hover:bg-red-700"
-        >
+        <button onClick={logout} className="bg-red-600 px-4 py-2 rounded hover:bg-red-700">
           Logout
         </button>
       </header>
@@ -138,9 +123,7 @@ export default function SuperUserPanel() {
               <li
                 key={index}
                 className={`p-2 rounded cursor-pointer ${
-                  index === selectedDashboard
-                    ? "bg-blue-600 font-bold"
-                    : "hover:bg-gray-600"
+                  index === selectedDashboard ? "bg-blue-600 font-bold" : "hover:bg-gray-600"
                 }`}
                 onClick={() => setSelectedDashboard(index)}
               >
@@ -157,25 +140,15 @@ export default function SuperUserPanel() {
             onChange={(e) => setNewDashboardName(e.target.value)}
             className="w-full p-2 text-sm mb-2 rounded text-black"
           />
-          <input
-            type="file"
-            accept=".xlsx, .xls"
-            onChange={handleExcelUpload}
-            className="text-sm mb-2"
-          />
-          <button
-            onClick={createDashboard}
-            className="w-full bg-blue-500 text-white text-sm py-1 rounded"
-          >
+          <input type="file" accept=".xlsx, .xls" onChange={handleExcelUpload} className="text-sm mb-2" />
+          <button onClick={createDashboard} className="w-full bg-blue-500 text-white text-sm py-1 rounded">
             Create Dashboard
           </button>
         </aside>
 
         <main className="flex-1 bg-gray-700 rounded p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">
-              {dashboards[selectedDashboard]?.name}
-            </h2>
+            <h2 className="text-xl font-semibold">{dashboards[selectedDashboard]?.name}</h2>
             <button
               onClick={() => setShowWidgetForm(!showWidgetForm)}
               className="bg-blue-500 text-sm px-3 py-1 rounded hover:bg-blue-600"
@@ -189,15 +162,8 @@ export default function SuperUserPanel() {
               <h3 className="font-semibold mb-2">Add Widget</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-black">
                 <div>
-                  <label className="block text-white text-sm mb-1">
-                    Widget Type
-                  </label>
-                  <select
-                    name="type"
-                    value={widgetForm.type}
-                    onChange={handleFormChange}
-                    className="w-full p-2 rounded"
-                  >
+                  <label className="block text-white text-sm mb-1">Widget Type</label>
+                  <select name="type" value={widgetForm.type} onChange={handleFormChange} className="w-full p-2 rounded">
                     <option>Line Chart</option>
                     <option>Bar Chart</option>
                     <option>Number Card</option>
@@ -205,35 +171,13 @@ export default function SuperUserPanel() {
                 </div>
                 <div>
                   <label className="block text-white text-sm mb-1">Metric</label>
-                  <select
-                    name="metric"
-                    value={widgetForm.metric}
-                    onChange={handleFormChange}
-                    className="w-full p-2 rounded"
-                  >
-                    <option>Feed Intake</option>
-                    <option>Weight</option>
-                    <option>Temperature</option>
+                  <select name="metric" value={widgetForm.metric} onChange={handleFormChange} className="w-full p-2 rounded">
+                    <option>Feed Efficiency by Location</option>
                     <option>Number of pigs</option>
-                    <option>Weight Gain Over Time</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-white text-sm mb-1">Location</label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={widgetForm.location}
-                    onChange={handleFormChange}
-                    className="w-full p-2 rounded"
-                    placeholder="All"
-                  />
-                </div>
               </div>
-              <button
-                onClick={addWidget}
-                className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
-              >
+              <button onClick={addWidget} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded">
                 Save Widget
               </button>
             </div>
@@ -244,17 +188,14 @@ export default function SuperUserPanel() {
               <div key={idx} className="relative">
                 {widget.type === "Number Card" ? (
                   <NumberCardWidget title={widget.metric} value={widget.value} />
-                ) : widget.type === "Line Chart" && widget.metric === "Weight Gain Over Time" ? (
-                  <LineChartWidget title={widget.metric} data={widget.data} groupKey="group" />
+                ) : widget.type === "Bar Chart" && widget.metric === "Feed Efficiency by Location" ? (
+                  <BarChartWidget title={widget.metric} data={widget.data} />
                 ) : (
                   <div className="bg-gray-600 p-4 rounded text-sm">
                     <p className="font-semibold">{widget.type}: {widget.metric}</p>
                   </div>
                 )}
-                <button
-                  onClick={() => removeWidget(idx)}
-                  className="absolute top-2 right-2 text-red-400 text-xs"
-                >
+                <button onClick={() => removeWidget(idx)} className="absolute top-2 right-2 text-red-400 text-xs">
                   Remove
                 </button>
               </div>
