@@ -17,13 +17,19 @@ export default function SuperUserPanel() {
   const [showWidgetForm, setShowWidgetForm] = useState(false);
   const [newDashboardName, setNewDashboardName] = useState("");
   const [excelFile, setExcelFile] = useState(null);
+  const [newUser, setNewUser] = useState({ username: "", password: "", role: "user" });
+
   const [widgetForm, setWidgetForm] = useState({
     type: "Number Card",
-    metric: "Number of pigs",
-    timePeriod: "Last 7 Days",
+    metric: "",
   });
 
-  const [newUser, setNewUser] = useState({ username: "", password: "", role: "user" });
+  const metricOptions = {
+    "Number Card": ["Number of pigs"],
+    "Bar Chart": ["Feed Efficiency by Location"],
+    "Line Chart": ["Average Feed Intake per Pig"],
+    "List": ["Underfed Pigs"],
+  };
 
   const handleExcelUpload = (e) => setExcelFile(e.target.files[0]);
 
@@ -116,9 +122,7 @@ export default function SuperUserPanel() {
         const animal = validAnimals.find((a) => a["Responder"] === responder);
         if (!animal) return;
         const excelDate = visit.Date;
-        const jsDate = typeof excelDate === "number"
-          ? new Date((excelDate - 25569) * 86400 * 1000)
-          : new Date(excelDate);
+        const jsDate = typeof excelDate === "number" ? new Date((excelDate - 25569) * 86400 * 1000) : new Date(excelDate);
         const dateKey = jsDate.toISOString().split("T")[0];
         const feedAmount = parseFloat(visit["Feed amount (g)"]) || 0;
 
@@ -196,19 +200,18 @@ export default function SuperUserPanel() {
                 <div>
                   <label className="block text-white text-sm mb-1">Widget Type</label>
                   <select name="type" value={widgetForm.type} onChange={handleFormChange} className="w-full p-2 rounded">
-                    <option>Number Card</option>
-                    <option>Bar Chart</option>
-                    <option>Line Chart</option>
-                    <option>List</option>
+                    {Object.keys(metricOptions).map((type) => (
+                      <option key={type}>{type}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-white text-sm mb-1">Metric</label>
                   <select name="metric" value={widgetForm.metric} onChange={handleFormChange} className="w-full p-2 rounded">
-                    <option>Number of pigs</option>
-                    <option>Feed Efficiency by Location</option>
-                    <option>Average Feed Intake per Pig</option>
-                    <option>Underfed Pigs</option>
+                    <option value="">Select metric</option>
+                    {metricOptions[widgetForm.type]?.map((metric) => (
+                      <option key={metric}>{metric}</option>
+                    ))}
                   </select>
                 </div>
               </div>
