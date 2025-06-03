@@ -5,10 +5,8 @@ import { AuthProvider, useAuth } from "./auth/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import SuperUserPanel from "./pages/SuperUserPanel";
-import UserManagement from "./pages/UserManagement";
 import ExcelDataViewer from "./components/ExcelDataViewer";
 import { DashboardProvider } from "./context/DashboardContext";
-import Warnings from "./pages/Warnings";
 
 
 const ProtectedRoute = ({ children, role }) => {
@@ -35,14 +33,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/warnings"
-            element={
-              <ProtectedRoute>
-                <Warnings />
-              </ProtectedRoute>
-            }
-          />
+          
           <Route
             path="/super"
             element={
@@ -51,14 +42,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/manage-users"
-            element={
-              <ProtectedRoute role="superuser">
-                <UserManagement />
-              </ProtectedRoute>
-            }
-          />
+          
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
       </Router>

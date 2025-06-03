@@ -13,9 +13,11 @@ export default function WidgetForm({ widgetForm, handleFormChange }) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-black">
+    <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 text-black">
       <div>
-        <label className="block text-white text-sm mb-1">Widget Type</label>
+        <label className="block text-white text-sm sm:text-base mb-1">
+          Widget Type
+        </label>
         <Select
           name="type"
           value={widgetForm.type}
@@ -30,7 +32,9 @@ export default function WidgetForm({ widgetForm, handleFormChange }) {
       </div>
 
       <div>
-        <label className="block text-white text-sm mb-1">Metric</label>
+        <label className="block text-white text-sm sm:text-base mb-1">
+          Metric
+        </label>
         <Select
           name="metric"
           value={widgetForm.metric}

@@ -55,10 +55,10 @@ export default function SuperUserPanelTemplate({
           </Text>
           <div className="flex gap-2">
             <Button onClick={logout} variant="danger">
-              Log ud
+              Logout
             </Button>
             <Button onClick={toggleWidgetForm} variant="primary">
-              {showWidgetForm ? "Annuller" : "Tilføj Widget"}
+              {showWidgetForm ? "Cancel" : "Add Widget"}
             </Button>
           </div>
         </div>
@@ -66,11 +66,11 @@ export default function SuperUserPanelTemplate({
         {showWidgetForm && (
           <div className="bg-gray-600 p-4 rounded mb-6">
             <Text as="h3" size="large" color="white" className="mb-2">
-              Tilføj Widget
+              Add Widget
             </Text>
             <WidgetForm widgetForm={widgetForm} handleFormChange={handleFormChange} />
             <Button onClick={handleAddWidget} variant="primary" className="mt-4">
-              Gem Widget
+              Save Widget
             </Button>
           </div>
         )}

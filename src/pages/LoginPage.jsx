@@ -55,7 +55,7 @@ export default function LoginPage() {
             />
           </div>
           <Button type="submit" className="w-full bg-gradient-to-r from-blue-500 to-blue-700">
-            LOGIN
+            Login
           </Button>
           {error && (
             <Text size="small" color="red-400" className="text-center">

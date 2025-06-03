@@ -7,7 +7,7 @@ export const useDashboard = () => useContext(DashboardContext);
 
 export const DashboardProvider = ({ children }) => {
   const [dashboards, setDashboards] = useState([
-    { name: "Dashboard 1", widgets: [], data: { animalData: [], visitData: [] } },
+    
   ]);
 
   const addDashboard = (newDashboard) => {
