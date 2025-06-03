@@ -13,15 +13,7 @@ export default function DashboardWidgets({ widgets = [], removeWidget }) {
   const isSuperuser = user?.role === "superuser";
 
   return (
-    <div className="
-        grid 
-        grid-cols-1               /* 1 kolonne på mobil */
-        md:grid-cols-2            /* 2 kolonner fra ≥768px */
-        lg:grid-cols-3            /* 3 kolonner fra ≥1024px */
-        xl:grid-cols-4            /* 4 kolonner fra ≥1280px */
-        gap-4 
-        p-2 sm:p-4 
-        max-w-full                /* Sikrer at grid aldrig går forbi 100% bredde */
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 w-full
       ">
       {widgets.map((widget, idx) => {
         let Inner;
