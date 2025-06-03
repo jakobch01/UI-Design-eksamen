@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import Text from "../atoms/Text";
+import Input from "../atoms/Input";
+import Button from "../atoms/Button";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -23,35 +26,42 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-800 px-4">
       <div className="bg-gray-700 p-8 rounded-lg shadow-md w-full max-w-sm">
-        <h2 className="text-3xl font-bold text-white mb-6 text-center">Login</h2>
+        <Text as="h2" size="xl" color="white" className="mb-6 text-center">
+          Login
+        </Text>
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-white font-semibold mb-1">Email:</label>
-            <input
+            <Text as="label" color="white" className="block font-semibold mb-1">
+              Email:
+            </Text>
+            <Input
               type="text"
+              name="username"
               placeholder="Enter the email"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-400 rounded bg-gray-900 text-white"
             />
           </div>
           <div>
-            <label className="block text-white font-semibold mb-1">Password:</label>
-            <input
+            <Text as="label" color="white" className="block font-semibold mb-1">
+              Password:
+            </Text>
+            <Input
               type="password"
+              name="password"
               placeholder="Enter the password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-400 rounded bg-gray-900 text-white"
             />
           </div>
-          <button
-            type="submit"
-            className="w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold py-2 px-4 rounded"
-          >
+          <Button type="submit" className="w-full bg-gradient-to-r from-blue-500 to-blue-700">
             LOGIN
-          </button>
-          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+          </Button>
+          {error && (
+            <Text size="small" color="red-400" className="text-center">
+              {error}
+            </Text>
+          )}
         </form>
       </div>
     </div>
