@@ -1,12 +1,21 @@
 // src/pages/SuperUserPanel.jsx
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { useAuth } from "../auth/AuthContext";
 import { useDashboard } from "../context/DashboardContext";
-
 import SuperUserPanelTemplate from "../templates/SuperUserPanelTemplate";
+
+// Utility functions moved to a separate file, e.g. ../utils/dataProcessing.js
+import {
+  parseExcelFile,
+  filterValidAnimals,
+  calculateNumberOfPigs,
+  getUnderfedPigs,
+  getFeedEfficiencyByLocation,
+  getAverageFeedIntakePerDay,
+} from "../utils/dataProcessing";
 
 export default function SuperUserPanel() {
   const navigate = useNavigate();
@@ -18,234 +27,166 @@ export default function SuperUserPanel() {
     removeWidgetFromDashboard,
   } = useDashboard();
 
+  // --- Dashboard Selection ---
   const [selectedDashboard, setSelectedDashboard] = useState(0);
-  const [showWidgetForm, setShowWidgetForm] = useState(false);
 
-  // --- Sidebar state ---
+  // --- Sidebar State ---
   const [newDashboardName, setNewDashboardName] = useState("");
   const [excelFile, setExcelFile] = useState(null);
+
+  // user‐creation form
   const [newUser, setNewUser] = useState({
     username: "",
     password: "",
     role: "user",
   });
 
-  // --- Widget-form state ---
+  // --- Widget‐Form State ---
+  const [showWidgetForm, setShowWidgetForm] = useState(false);
+  const widgetFormToggleRef = useRef(null);
+
   const [widgetForm, setWidgetForm] = useState({
     type: "Number Card",
     metric: "",
   });
 
-  const metricOptions = {
-    "Number Card": ["Number of pigs"],
-    "Bar Chart": ["Feed Efficiency by Location"],
-    "Line Chart": ["Average Feed Intake per Pig"],
-    "List": ["Underfed Pigs"],
-  };
+  // Define which metrics are available for each widget type
+  const metricOptions = useMemo(
+    () => ({
+      "Number Card": ["Number of pigs"],
+      "Bar Chart": ["Feed Efficiency by Location"],
+      "Line Chart": ["Average Feed Intake per Pig"],
+      List: ["Underfed Pigs"],
+    }),
+    []
+  );
 
-  // --- Sidebar handlers ---
-  const handleExcelUpload = (e) => setExcelFile(e.target.files[0]);
+  // For accessibility: whenever the widget form opens, focus on the first input
+  useEffect(() => {
+    if (showWidgetForm && widgetFormToggleRef.current) {
+      widgetFormToggleRef.current.focus();
+    }
+  }, [showWidgetForm]);
 
-  const createDashboard = () => {
+  // --- Handle Excel Upload ---
+  const handleExcelUpload = useCallback((e) => {
+    setExcelFile(e.target.files[0]);
+  }, []);
+
+  // Create a new dashboard based on uploaded Excel data
+  const createDashboard = useCallback(async () => {
     if (!newDashboardName.trim() || !excelFile) {
+      // Using a live region or role="alert" in template to announce this
       alert("Please enter a dashboard name and select an Excel file!");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const wb = XLSX.read(evt.target.result, { type: "binary" });
-      const animalData = XLSX.utils.sheet_to_json(
-        wb.Sheets["Animal data"] || {}
-      );
-      const visitData = XLSX.utils.sheet_to_json(
-        wb.Sheets["Visit data"] || {}
-      );
+    try {
+      const { animalData, visitData } = await parseExcelFile(excelFile);
 
       if (!animalData.length || !visitData.length) {
         alert(
-          "Excel file must contain 'Animal data' and 'Visit data' sheets!"
+          "Excel file must contain non‐empty 'Animal data' and 'Visit data' sheets!"
         );
         return;
       }
 
       addDashboard({
-        name: newDashboardName,
+        name: newDashboardName.trim(),
         widgets: [],
         data: { animalData, visitData },
       });
+
       setNewDashboardName("");
       setExcelFile(null);
-    };
-    reader.readAsBinaryString(excelFile);
-  };
+    } catch (error) {
+      console.error("Error parsing Excel:", error);
+      alert("Failed to read Excel file. Please check file format.");
+    }
+  }, [newDashboardName, excelFile, addDashboard]);
 
-  const handleUserInputChange = (e) => {
-    setNewUser((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  // --- User Creation Handlers ---
+  const handleUserInputChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setNewUser((prev) => ({ ...prev, [name]: value }));
+  }, []);
 
-  const handleCreateUser = () => {
-    if (!newUser.username || !newUser.password) {
-      alert("Please enter username and password");
+  const handleCreateUser = useCallback(() => {
+    if (!newUser.username.trim() || !newUser.password) {
+      alert("Please enter a valid username and password.");
       return;
     }
     createUser(newUser);
     setNewUser({ username: "", password: "", role: "user" });
-  };
+  }, [newUser, createUser]);
 
-  // --- Widget-form handlers ---
-  const handleFormChange = (e) =>
-    setWidgetForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  // --- Widget Form Handlers ---
+  const handleFormChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setWidgetForm((prev) => ({ ...prev, [name]: value }));
+  }, []);
 
-  const handleAddWidget = () => {
+  const handleAddWidget = useCallback(() => {
+    const dashboard = dashboards[selectedDashboard];
+    if (!dashboard) return;
+
+    const animalData = dashboard.data?.animalData || [];
+    const visitData = dashboard.data?.visitData || [];
+    const validAnimals = filterValidAnimals(animalData);
+
     let widgetToAdd = { ...widgetForm };
-    const animalData =
-      dashboards[selectedDashboard]?.data?.animalData || [];
-    const visitData =
-      dashboards[selectedDashboard]?.data?.visitData || [];
 
-    // Filtrer ugyldige dyr væk:
-    const validAnimals = animalData.filter((a) => {
-      const weightGain = parseFloat(a["Weight gain (kg)"]) || 0;
-      const daysInTest = parseFloat(a["Completed days in test"]) || 0;
-      return weightGain > 0 && daysInTest >= 0;
-    });
-
-    // --- Number Card ---
-    if (
-      widgetForm.type === "Number Card" &&
-      widgetForm.metric === "Number of pigs"
-    ) {
-      widgetToAdd.value = validAnimals.length;
-    }
-
-    // --- LISTE: Underfed Pigs ---
-    if (
-      widgetForm.type === "List" &&
-      widgetForm.metric === "Underfed Pigs"
-    ) {
-      const underfedThreshold = 0.5;
-      widgetToAdd.data = validAnimals
-        .map((animal) => {
-          const responder = animal["Responder"];
-          const location = animal["Location"] || "Unknown";
-          const weightGain = parseFloat(animal["Weight gain (kg)"]) || 0;
-          const daysInTest =
-            parseFloat(animal["Completed days in test"]) || 1;
-          const visits = visitData.filter(
-            (v) => v["Responder"] === responder
-          );
-          const totalFeed = visits.reduce(
-            (sum, v) => sum + (parseFloat(v["Feed amount (g)"]) || 0),
-            0
-          );
-          const gainPerDay = weightGain / daysInTest;
-
-          console.log(
-            `Responder ${responder}: gainPerDay = ${gainPerDay.toFixed(2)}`
-          );
-
-          return {
-            responder,
-            location,
-            totalFeed: totalFeed.toFixed(2),
-            weightGain: weightGain.toFixed(2),
-            gainPerDay,
-          };
-        })
-        .filter((pig) => pig.gainPerDay < underfedThreshold);
-
-      console.log(
-        "Underfed pigs (før filtrering):",
-        validAnimals.length
-      );
-      console.log(
-        "Underfed pigs (efter filtrering):",
-        widgetToAdd.data.length,
-        widgetToAdd.data
-      );
-    }
-
-    // --- Bar Chart: Feed Efficiency by Location ---
-    if (
-      widgetForm.type === "Bar Chart" &&
-      widgetForm.metric === "Feed Efficiency by Location"
-    ) {
-      const efficiencyByLocation = {};
-      validAnimals.forEach((animal) => {
-        const location = animal["Location"] || "Unknown";
-        const weightGain = parseFloat(animal["Weight gain (kg)"]) || 0;
-        const visits = visitData.filter(
-          (v) => v["Responder"] === animal["Responder"]
-        );
-        const totalFeed = visits.reduce(
-          (sum, v) => sum + (parseFloat(v["Feed amount (g)"]) || 0),
-          0
-        );
-
-        if (!efficiencyByLocation[location]) {
-          efficiencyByLocation[location] = {
-            totalFeed: 0,
-            totalWeightGain: 0,
-          };
+    switch (widgetForm.type) {
+      case "Number Card":
+        if (widgetForm.metric === "Number of pigs") {
+          widgetToAdd.value = calculateNumberOfPigs(validAnimals);
         }
-        efficiencyByLocation[location].totalFeed += totalFeed;
-        efficiencyByLocation[location].totalWeightGain += weightGain;
-      });
+        break;
 
-      widgetToAdd.data = Object.entries(efficiencyByLocation).map(
-        ([location, vals]) => ({
-          location,
-          efficiency:
-            vals.totalWeightGain > 0
-              ? vals.totalFeed / vals.totalWeightGain
-              : 0,
-        })
-      );
-    }
+      case "List":
+        if (widgetForm.metric === "Underfed Pigs") {
+          widgetToAdd.data = getUnderfedPigs(validAnimals, visitData);
+        }
+        break;
 
-    // --- Line Chart: Average Feed Intake per Pig ---
-    if (
-      widgetForm.type === "Line Chart" &&
-      widgetForm.metric === "Average Feed Intake per Pig"
-    ) {
-      const feedByDate = {};
-      visitData.forEach((visit) => {
-        const responder = visit["Responder"];
-        const animal = validAnimals.find(
-          (a) => a["Responder"] === responder
-        );
-        if (!animal) return;
-        const excelDate = visit.Date;
-        const jsDate =
-          typeof excelDate === "number"
-            ? new Date((excelDate - 25569) * 86400 * 1000)
-            : new Date(excelDate);
-        const dateKey = jsDate.toISOString().split("T")[0];
-        const feedAmt = parseFloat(visit["Feed amount (g)"]) || 0;
+      case "Bar Chart":
+        if (widgetForm.metric === "Feed Efficiency by Location") {
+          widgetToAdd.data = getFeedEfficiencyByLocation(
+            validAnimals,
+            visitData
+          );
+        }
+        break;
 
-        if (!feedByDate[dateKey])
-          feedByDate[dateKey] = { totalFeed: 0, count: 0 };
-        feedByDate[dateKey].totalFeed += feedAmt;
-        feedByDate[dateKey].count += 1;
-      });
+      case "Line Chart":
+        if (widgetForm.metric === "Average Feed Intake per Pig") {
+          widgetToAdd.data = getAverageFeedIntakePerDay(
+            validAnimals,
+            visitData
+          );
+        }
+        break;
 
-      widgetToAdd.data = Object.entries(feedByDate).map(
-        ([date, vals]) => ({
-          date,
-          value: vals.count ? vals.totalFeed / vals.count : 0,
-        })
-      );
+      default:
+        break;
     }
 
     addWidgetToDashboard(selectedDashboard, widgetToAdd);
     setShowWidgetForm(false);
-  };
+  }, [
+    dashboards,
+    selectedDashboard,
+    widgetForm,
+    addWidgetToDashboard,
+  ]);
 
-  // --- Fjern widget handler ---
-  const removeWidget = (idx) => {
-    removeWidgetFromDashboard(selectedDashboard, idx);
-  };
+  // Remove a widget from the selected dashboard
+  const removeWidgetHandler = useCallback(
+    (widgetIndex) => {
+      removeWidgetFromDashboard(selectedDashboard, widgetIndex);
+    },
+    [selectedDashboard, removeWidgetFromDashboard]
+  );
 
   return (
     <SuperUserPanelTemplate
@@ -262,13 +203,18 @@ export default function SuperUserPanel() {
       handleCreateUser={handleCreateUser}
       // Widget-form props
       widgetForm={widgetForm}
+      metricOptions={metricOptions}
       handleFormChange={handleFormChange}
       handleAddWidget={handleAddWidget}
-      // Øvrige props
-      logout={logout}
-      removeWidget={removeWidget}
       showWidgetForm={showWidgetForm}
-      toggleWidgetForm={() => setShowWidgetForm((prev) => !prev)}
+      toggleWidgetForm={() =>
+        setShowWidgetForm((prev) => !prev)
+      }
+      widgetFormToggleRef={widgetFormToggleRef}
+      // Remove widget handler
+      removeWidget={removeWidgetHandler}
+      // Other props
+      logout={logout}
     />
   );
 }
