@@ -1,4 +1,3 @@
-// src/molecules/WidgetCard.jsx
 import React from "react";
 import Text from "../atoms/Text";
 

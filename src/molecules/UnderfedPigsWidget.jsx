@@ -1,4 +1,3 @@
-// src/molecules/UnderfedPigsWidget.jsx
 import React from "react";
 import Text from "../atoms/Text";
 import TableRow from "../atoms/TableRow";

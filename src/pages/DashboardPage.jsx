@@ -1,5 +1,3 @@
-// src/pages/DashboardPage.jsx
-
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { useDashboard } from "../context/DashboardContext";

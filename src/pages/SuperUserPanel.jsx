@@ -1,5 +1,3 @@
-// src/pages/SuperUserPanel.jsx
-
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";

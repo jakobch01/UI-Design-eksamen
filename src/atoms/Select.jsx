@@ -1,4 +1,3 @@
-// src/atoms/Select.jsx
 import React from "react";
 
 export default function Select({ name, value, onChange, children, className = "" }) {

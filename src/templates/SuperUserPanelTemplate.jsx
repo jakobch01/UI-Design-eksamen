@@ -1,5 +1,3 @@
-// src/templates/SuperUserPanelTemplate.jsx
-
 import React, { memo, useRef, useEffect } from "react";
 import PropTypes from "prop-types";
 import Sidebar from "../organisms/Sidebar";

@@ -1,5 +1,3 @@
-// src/molecules/WidgetForm.jsx
-
 import React from "react";
 import Input from "../atoms/Input";
 import Select from "../atoms/Select";

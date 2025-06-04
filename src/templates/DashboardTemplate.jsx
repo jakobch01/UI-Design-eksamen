@@ -1,5 +1,3 @@
-// src/organisms/DashboardTemplate.jsx
-
 import React, { memo } from "react";
 import PropTypes from "prop-types";
 import Text from "../atoms/Text";

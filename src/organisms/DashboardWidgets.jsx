@@ -1,5 +1,3 @@
-// src/organisms/DashboardWidgets.jsx
-
 import React from "react";
 import { useAuth } from "../auth/AuthContext";
 import WidgetCard from "../molecules/WidgetCard";

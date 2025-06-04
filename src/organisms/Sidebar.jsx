@@ -1,5 +1,3 @@
-// src/organisms/Sidebar.jsx
-
 import React from "react";
 import Text from "../atoms/Text";
 import Label from "../atoms/Label";
