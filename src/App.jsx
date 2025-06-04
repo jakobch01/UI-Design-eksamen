@@ -5,7 +5,6 @@ import { AuthProvider, useAuth } from "./auth/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import SuperUserPanel from "./pages/SuperUserPanel";
-import ExcelDataViewer from "./components/ExcelDataViewer";
 import { DashboardProvider } from "./context/DashboardContext";
 
 
